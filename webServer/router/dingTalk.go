@@ -1,7 +1,6 @@
 package router
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/Deansquirrel/goDingtalkRobot/object"
 	log "github.com/Deansquirrel/goToolLog"
@@ -40,27 +39,28 @@ func (dt *dingTalk) sendTextMsg(ctx iris.Context) {
 	err := ctx.ReadJSON(&tm)
 	if err != nil {
 		ctx.StatusCode(iris.StatusBadRequest)
-		_, _ = ctx.WriteString(dt.c.GetErrReturn(err.Error()))
-		log.Warn("转换请求文本时发生错误，" + err.Error())
-		log.Warn(dt.c.GetRequestBody(ctx))
+		dt.c.WriteResponse(ctx, dt.c.GetErrReturn(err))
+		//_, _ = ctx.WriteString(dt.c.GetErrReturn(err.Error()))
+		log.Warn("转换请求文本时发生错误:" + err.Error() + ",requestBody:" + dt.c.GetRequestBody(ctx))
 		return
 	}
-	ts, err := json.Marshal(tm)
-	fmt.Println(string(ts))
 	rm, err := tm.GetAliMsgStr()
 	if err != nil {
-		_, _ = ctx.WriteString(dt.c.GetErrReturn(err.Error()))
-		log.Warn("获取阿里请求文本时发生错误，" + err.Error())
+		dt.c.WriteResponse(ctx, dt.c.GetErrReturn(err))
+		//_, _ = ctx.WriteString(dt.c.GetErrReturn(err.Error()))
+		log.Warn("获取阿里请求文本时发生错误:" + err.Error() + ",requestBody:" + dt.c.GetRequestBody(ctx))
 		return
 	}
 	log.Debug(rm)
 	re, err := dt.c.httpPostJsonData([]byte(rm), dt.getWebHookUrl(tm.WebHookKey))
 	if err != nil {
-		_, _ = ctx.WriteString(dt.c.GetErrReturn(err.Error()))
-		log.Warn("发送Http数据时发生错误，" + err.Error())
+		dt.c.WriteResponse(ctx, dt.c.GetErrReturn(err))
+		//_, _ = ctx.WriteString(dt.c.GetErrReturn(err.Error()))
+		log.Warn("发送Http数据时发生错误:" + err.Error() + ",requestBody:" + dt.c.GetRequestBody(ctx))
 		return
 	}
-	_, _ = ctx.WriteString(dt.c.checkResponse(re))
+	//_, _ = ctx.WriteString(dt.c.checkResponse(re))
+	dt.c.WriteResponse(ctx, dt.c.CheckAliResponse(re))
 	return
 }
 

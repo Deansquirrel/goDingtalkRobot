@@ -2,7 +2,6 @@ package router
 
 import (
 	"github.com/Deansquirrel/goDingtalkRobot/global"
-	"github.com/Deansquirrel/goToolCommon"
 	"github.com/kataras/iris"
 )
 
@@ -11,7 +10,10 @@ type base struct {
 	c   common
 }
 
+//版本信息返回数据结构（version）
 type versionInfo struct {
+	ErrCode int    `json:"errcode"`
+	ErrMsg  string `json:"errmsg"`
 	Version string `json:"version"`
 }
 
@@ -28,13 +30,9 @@ func (base *base) AddBase() {
 
 func (base *base) version(ctx iris.Context) {
 	v := versionInfo{
+		ErrCode: 0,
+		ErrMsg:  "",
 		Version: global.Version,
 	}
-	str, err := goToolCommon.GetJsonStr(v)
-	if err != nil {
-		_, _ = ctx.WriteString(base.c.GetErrReturn(err.Error()))
-		return
-	}
-	_, _ = ctx.WriteString(str)
-	return
+	base.c.WriteResponse(ctx, v)
 }
