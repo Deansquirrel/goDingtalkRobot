@@ -60,6 +60,8 @@ func (ws *webServer) irisInit(app *iris.Application) {
 
 //iris添加路由
 func (ws *webServer) irisRouter(app *iris.Application) {
+	routerBase := wsRouter.NewRouterBase(app)
+	routerBase.AddBase()
 	routerDingTalk := wsRouter.NewRouterDingTalk(app)
 	routerDingTalk.AddDingTalk()
 }
