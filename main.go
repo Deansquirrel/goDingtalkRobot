@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/Deansquirrel/goDingtalkRobot/common"
 	"github.com/Deansquirrel/goDingtalkRobot/global"
+	"github.com/Deansquirrel/goDingtalkRobot/webServer"
 	log "github.com/Deansquirrel/goToolLog"
-	"time"
 )
 
 func main() {
@@ -27,9 +27,11 @@ func main() {
 	log.Info("程序启动")
 	defer log.Info("程序退出")
 	//==================================================================================================================
-	time.AfterFunc(time.Second*5, func() {
-		global.Cancel()
-	})
+	ws := webServer.NewWebServer(global.SysConfig.Iris.Port)
+	ws.StartWebService()
+	//time.AfterFunc(time.Second*5, func() {
+	//	global.Cancel()
+	//})
 	//==================================================================================================================
 	select {
 	case <-global.Ctx.Done():
