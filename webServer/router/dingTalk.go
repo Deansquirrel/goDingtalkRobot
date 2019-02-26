@@ -29,7 +29,7 @@ func NewRouterDingTalk(app *iris.Application) *dingTalk {
 func (dt *dingTalk) AddDingTalk() {
 	//clientInfo := dt.app.Party("/DingTalk", dt.dingTalk)
 	//clientInfo.Post("/Text", dt.sendTextMsg)
-	dt.app.Post("/Text", dt.sendTextMsg)
+	dt.app.Post("/text", dt.sendTextMsg)
 }
 
 func (dt *dingTalk) dingTalk(ctx iris.Context) {
