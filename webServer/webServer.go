@@ -48,6 +48,10 @@ func (ws *webServer) StartWebService() {
 	ws.irisInit(app)
 	ws.irisRouter(app)
 	ws.irisStart(app)
+
+	select {
+	case <-global.Ctx.Done():
+	}
 }
 
 //iris初始化
@@ -66,8 +70,8 @@ func (ws *webServer) irisRouter(app *iris.Application) {
 
 //iris启动
 func (ws *webServer) irisStart(app *iris.Application) {
-	log.Info("StartWebService")
-	defer log.Info("StartWebService Complete")
+	log.Warn("StartWebService")
+	defer log.Warn("StartWebService Complete")
 	go func() {
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch,

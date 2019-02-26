@@ -1,6 +1,8 @@
 package object
 
-import "github.com/Deansquirrel/goToolCommon"
+import (
+	"github.com/Deansquirrel/goToolCommon"
+)
 
 type DingTalkTextMsg struct {
 	WebHookKey string   `json:"webhookkey"`
@@ -37,6 +39,5 @@ func (dt *DingTalkTextMsg) GetAliMsgStr() (string, error) {
 	for _, s := range dt.AtMobiles {
 		ro.At.AtMobiles = append(ro.At.AtMobiles, s)
 	}
-
 	return goToolCommon.GetJsonStr(ro)
 }

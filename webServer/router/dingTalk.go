@@ -12,6 +12,7 @@ import (
 
 const (
 	DingTalkWebHookFormat = "https://oapi.dingtalk.com/robot/send?access_token=%s"
+	Version               = "0.0.0 Build20000101"
 )
 
 type dingTalk struct {
@@ -27,8 +28,9 @@ func NewRouterDingTalk(app *iris.Application) *dingTalk {
 }
 
 func (dt *dingTalk) AddDingTalk() {
-	clientInfo := dt.app.Party("/DingTalk", dt.dingTalk)
-	clientInfo.Post("/Text", dt.sendTextMsg)
+	//clientInfo := dt.app.Party("/DingTalk", dt.dingTalk)
+	//clientInfo.Post("/Text", dt.sendTextMsg)
+	dt.app.Post("/Text", dt.sendTextMsg)
 }
 
 func (dt *dingTalk) dingTalk(ctx iris.Context) {

@@ -17,10 +17,10 @@ func GetSysConfig(fileName string) (*config.SysConfig, error) {
 	fileFullPath := path + "\\" + fileName
 	b, err := goToolCommon.PathExists(fileFullPath)
 	if err != nil {
-		log.Warn("检查路径是否存在时遇到错误:" + err.Error() + ",使用默认配置;filePath:" + fileFullPath)
+		log.Warn("检查路径是否存在时遇到错误：" + err.Error() + ",使用默认配置；filePath:" + fileFullPath)
 		c = config.SysConfig{}
 	} else if !b {
-		log.Info("未发现配置文件,使用默认配置" + ";filePath:" + fileFullPath)
+		log.Info("未发现配置文件,使用默认配置；filePath:" + fileFullPath)
 		c = config.SysConfig{}
 	} else {
 		_, err = toml.DecodeFile(fileFullPath, &c)
