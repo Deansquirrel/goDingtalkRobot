@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/Deansquirrel/goDingtalkRobot/object"
 	log "github.com/Deansquirrel/goToolLog"
 	"github.com/kataras/iris"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 )
 
 const (
-	TranErrStr = "{\"code\":-1,\"msg\":\"构造返回结果时发生错误 [%s]\"}"
+	TranErrStr = "{\"errcode\":-1,\"errmsg\":\"构造返回结果时发生错误 [%s]\"}"
 )
 
 type common struct {
@@ -31,25 +31,46 @@ func (c *common) GetRequestBody(ctx iris.Context) string {
 	return string(b)
 }
 
-func (c *common) GetMsgReturn(msg string) string {
-	return c.getReturn(0, msg)
+func (c *common) GetOKReturn(msg string) *object.SimpleResponse {
+	return c.GetMsgReturn("OK")
 }
 
-func (c *common) GetErrReturn(msg string) string {
-	return c.getReturn(-1, msg)
-}
-
-func (c *common) getReturn(code int, msg string) string {
-	rd := responseDao{
-		ErrCode: code,
+func (c *common) GetMsgReturn(msg string) *object.SimpleResponse {
+	return &object.SimpleResponse{
+		ErrCode: 0,
 		ErrMsg:  msg,
 	}
-	rb, err := json.Marshal(rd)
-	if err != nil {
-		return fmt.Sprintf(TranErrStr, "err:"+err.Error()+",code:"+strconv.Itoa(code)+",msg:"+msg)
-	} else {
-		return string(rb)
+}
+
+func (c *common) GetErrReturn(err error) *object.SimpleResponse {
+	return &object.SimpleResponse{
+		ErrCode: -1,
+		ErrMsg:  err.Error(),
 	}
+}
+
+//func (c *common) getReturn(code int, msg string) string {
+//	rd := object.SimpleResponse{
+//		ErrCode: code,
+//		ErrMsg:  msg,
+//	}
+//	rb, err := json.Marshal(rd)
+//	if err != nil {
+//		return fmt.Sprintf(TranErrStr, "err:"+err.Error()+",code:"+strconv.Itoa(code)+",msg:"+msg)
+//	} else {
+//		return string(rb)
+//	}
+//}
+
+//向ctx中添加返回内容
+func (c *common) WriteResponse(ctx iris.Context, v interface{}) {
+	str, err := json.Marshal(v)
+	if err != nil {
+		_, _ = ctx.WriteString(fmt.Sprintf(TranErrStr, "err:"+err.Error()))
+		return
+	}
+	_, _ = ctx.WriteString(string(str))
+	return
 }
 
 //POST发送数据
@@ -74,22 +95,25 @@ func (c *common) httpPostJsonData(data []byte, url string) (string, error) {
 	return string(rData), nil
 }
 
-func (c *common) checkResponse(resp string) string {
+//验证阿里返回的结果消息
+func (c *common) CheckAliResponse(resp string) *object.SimpleResponse {
 	var ar aliResponseDat
 	err := json.Unmarshal([]byte(resp), &ar)
 	if err != nil {
-		return c.GetErrReturn("验证返回结果时发生错误：" + err.Error())
+		return &object.SimpleResponse{
+			ErrCode: -1,
+			ErrMsg:  "验证返回结果时发生错误：" + err.Error(),
+		}
+		//c.GetErrReturn("验证返回结果时发生错误：" + err.Error())
 	}
-	return c.getReturn(ar.ErrCode, ar.ErrMsg)
+	return &object.SimpleResponse{
+		ErrCode: ar.ErrCode,
+		ErrMsg:  ar.ErrMsg,
+	}
 }
 
 type aliResponseDat struct {
 	//{"errmsg":"ok","errcode":0}
-	ErrMsg  string `json:"errmsg"`
 	ErrCode int    `json:"errcode"`
-}
-
-type responseDao struct {
-	ErrCode int    `json:"code"`
-	ErrMsg  string `json:"msg"`
+	ErrMsg  string `json:"errmsg"`
 }
