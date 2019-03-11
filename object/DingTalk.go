@@ -89,14 +89,15 @@ func (dt *DingTalk) CheckAliResponse(resp string) *object.SimpleResponse {
 func (dt *DingTalk) getDelayTime(key string) (time.Duration, bool) {
 	dt.lock.Lock()
 	defer dt.lock.Unlock()
+	delayDuration := time.Millisecond * 3100
 	c, ok := dt.mapSendRecords[key]
 	if ok {
-		if c.Before(time.Now().Add(-time.Second * 3)) {
+		if c.Before(time.Now().Add(-delayDuration)) {
 			dt.mapSendRecords[key] = time.Now()
 			return time.Second, false
 		} else {
-			dt.mapSendRecords[key] = c.Add(time.Second * 3)
-			return time.Until(c.Add(time.Second * 3)), true
+			dt.mapSendRecords[key] = c.Add(delayDuration)
+			return time.Until(c.Add(delayDuration)), true
 		}
 	} else {
 		//无记录，新增
