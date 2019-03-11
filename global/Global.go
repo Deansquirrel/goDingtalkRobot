@@ -7,7 +7,7 @@ import (
 
 const (
 	//LastVersion = "1.0.1 Build201903111529"
-	Version = "0.0.0 Build20000101"
+	Version = "1.0.2 Build20190311"
 )
 
 var SysConfig *config.SysConfig
