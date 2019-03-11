@@ -1,14 +1,12 @@
 package router
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/Deansquirrel/goDingtalkRobot/object"
 	log "github.com/Deansquirrel/goToolLog"
 	"github.com/kataras/iris"
 	"io/ioutil"
-	"net/http"
 )
 
 const (
@@ -71,49 +69,4 @@ func (c *common) WriteResponse(ctx iris.Context, v interface{}) {
 	}
 	_, _ = ctx.WriteString(string(str))
 	return
-}
-
-//POST发送数据
-func (c *common) httpPostJsonData(data []byte, url string) (string, error) {
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-	rData, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	return string(rData), nil
-}
-
-//验证阿里返回的结果消息
-func (c *common) CheckAliResponse(resp string) *object.SimpleResponse {
-	var ar aliResponseDat
-	err := json.Unmarshal([]byte(resp), &ar)
-	if err != nil {
-		return &object.SimpleResponse{
-			ErrCode: -1,
-			ErrMsg:  "验证返回结果时发生错误：" + err.Error(),
-		}
-		//c.GetErrReturn("验证返回结果时发生错误：" + err.Error())
-	}
-	return &object.SimpleResponse{
-		ErrCode: ar.ErrCode,
-		ErrMsg:  ar.ErrMsg,
-	}
-}
-
-type aliResponseDat struct {
-	//{"errmsg":"ok","errcode":0}
-	ErrCode int    `json:"errcode"`
-	ErrMsg  string `json:"errmsg"`
 }
