@@ -15,48 +15,25 @@ import log "github.com/Deansquirrel/goToolLog"
 
 const (
 	DingTalkWebHookFormat = "https://oapi.dingtalk.com/robot/send?access_token=%s"
-	SendTooFastError      = "send too fast"
+	//SendTooFastError      = "send too fast"
 )
 
-var lock sync.Mutex
-var mapSendRecords map[string]*sendRecords
+type DingTalk struct {
+	lock           sync.Mutex
+	mapSendRecords map[string]time.Time
+}
 
-func init() {
-	mapSendRecords = make(map[string]*sendRecords, 0)
+func NewDingTalk() *DingTalk {
+	dt := DingTalk{}
+	dt.mapSendRecords = make(map[string]time.Time, 0)
 	c := cron.New()
-	err := c.AddFunc("0 0/1 * * * ?", clearTimes)
+	err := c.AddFunc("0 0/1 * * * ?", dt.clearTimes)
 	if err != nil {
 		log.Error(err.Error())
 	} else {
 		c.Start()
 	}
-}
-
-//定时清除无效记录
-func clearTimes() {
-	lock.Lock()
-	defer lock.Unlock()
-	timeOut := time.Now().Add(-time.Minute)
-	list := make([]string, 0)
-	for key, val := range mapSendRecords {
-		if val.LastTime.Before(timeOut) {
-			list = append(list, key)
-		}
-	}
-	for _, delKey := range list {
-		log.Debug("del key " + delKey)
-		delete(mapSendRecords, delKey)
-	}
-}
-
-type DingTalk struct {
-}
-
-type sendRecords struct {
-	Key       string
-	Times     int
-	FirstTime time.Time
-	LastTime  time.Time
+	return &dt
 }
 
 type aliResponseDat struct {
@@ -70,8 +47,9 @@ func (dt *DingTalk) GetWebHookUrl(key string) string {
 }
 
 func (dt *DingTalk) SendTextMsg(msg *DingTalkTextMsg) (*object.SimpleResponse, error) {
-	if err := dt.addTimes(msg.WebHookKey); err != nil {
-		return nil, err
+	if dTime, ok := dt.getDelayTime(msg.WebHookKey); ok {
+		log.Debug("delay")
+		time.Sleep(dTime)
 	}
 	rm, err := msg.GetAliMsgStr()
 	if err != nil {
@@ -108,34 +86,38 @@ func (dt *DingTalk) CheckAliResponse(resp string) *object.SimpleResponse {
 	}
 }
 
-func (dt *DingTalk) addTimes(key string) error {
-	lock.Lock()
-	defer lock.Unlock()
-	now := time.Now()
-	c, ok := mapSendRecords[key]
+func (dt *DingTalk) getDelayTime(key string) (time.Duration, bool) {
+	dt.lock.Lock()
+	defer dt.lock.Unlock()
+	c, ok := dt.mapSendRecords[key]
 	if ok {
-		if now.After(c.FirstTime.Add(time.Minute)) {
-			//首条消息已超过1分钟,充值状态
-			c.FirstTime = now
-			c.Times = 1
-			return nil
+		if c.Before(time.Now().Add(-time.Second * 3)) {
+			dt.mapSendRecords[key] = time.Now()
+			return time.Second, false
+		} else {
+			dt.mapSendRecords[key] = c.Add(time.Second * 3)
+			return time.Until(c.Add(time.Second * 3)), true
 		}
-		if c.Times < 20 {
-			//未超过规定的20次，增加次数
-			c.Times = c.Times + 1
-			c.LastTime = now
-			return nil
-		}
-		return errors.New(SendTooFastError)
 	} else {
 		//无记录，新增
 		log.Debug("add key " + key)
-		mapSendRecords[key] = &sendRecords{
-			Key:       key,
-			Times:     1,
-			FirstTime: now,
-			LastTime:  now,
+		dt.mapSendRecords[key] = time.Now()
+		return time.Second, false
+	}
+}
+
+//定时清除无效记录
+func (dt *DingTalk) clearTimes() {
+	dt.lock.Lock()
+	defer dt.lock.Unlock()
+	outTime := time.Now().Add(-time.Minute)
+	list := make([]string, 0)
+	for key, val := range dt.mapSendRecords {
+		if val.Before(outTime) {
+			list = append(list, key)
 		}
-		return nil
+	}
+	for _, key := range list {
+		delete(dt.mapSendRecords, key)
 	}
 }

@@ -9,14 +9,14 @@ import (
 type dingTalk struct {
 	app    *iris.Application
 	c      common
-	dtTool object.DingTalk
+	dtTool *object.DingTalk
 }
 
 func NewRouterDingTalk(app *iris.Application) *dingTalk {
 	return &dingTalk{
 		app:    app,
 		c:      common{},
-		dtTool: object.DingTalk{},
+		dtTool: object.NewDingTalk(),
 	}
 }
 
