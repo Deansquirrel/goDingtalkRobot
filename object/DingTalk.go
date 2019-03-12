@@ -2,9 +2,9 @@ package object
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/Deansquirrel/goMonitorV2/object"
-	"github.com/kataras/iris/core/errors"
 	"github.com/robfig/cron"
 	"sync"
 	"time"
